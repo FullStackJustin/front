@@ -1,6 +1,5 @@
 html{
     background-color: #D1D5DB;
-    overflow-y: hidden;
 }
 ul li{
     box-shadow: rgba(0, 0, 0, 0.349) 0px 2px 3px;
@@ -8,4 +7,7 @@ ul li{
     padding-bottom: 2.5px;
     margin-left: 10px;
     margin-right: 10px;
+    margin-top:25px;
+    margin-bottom:25px;
+    
 }
