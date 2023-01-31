@@ -32,7 +32,7 @@ const Chatroom = () => {
       setAllMsgs([...allMsgs, { time: data.time, message: data.message }])
     })
     return () => socket.off("receive_message")
-  }, [allMsgs])
+  }, [allMsgs, socket])
   return (
     <div className="h-[100vh] w-[90vw] absolute top-0 left-[5vw] bg-blue-300 ">
       <div className="w-[80vw] my-[5vh] h-[75vh] bg-white py-[25px] rounded-lg mx-auto">
