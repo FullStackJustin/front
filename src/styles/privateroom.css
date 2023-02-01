@@ -9,5 +9,11 @@ ul li{
     margin-right: 10px;
     margin-top:25px;
     margin-bottom:25px;
-    
+    padding-left: 5px;
 }
+/* ul li:nth-child(odd){
+    background-color: #0049e5c6;
+}
+ul li:nth-child(even){
+    background-color: #50545d45;
+} */

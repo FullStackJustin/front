@@ -1,13 +1,8 @@
 import "../styles/privateroom.css";
-import {io} from "socket.io-client"
-const { useState, useEffect, useRef } = require("react");
+import { useState, useEffect, useRef } from "react";
 
-const PrivateRoom = () => {
+const PrivateRoom = ({ socket }) => {
 
-    const socket = io("http://localhost:3000");
-    socket.on("connect", () => {
-        console.log(socket.id)
-    })
     const msgRef = useRef("");
     const roomRef = useRef("");
 
@@ -17,37 +12,40 @@ const PrivateRoom = () => {
     const joinRoom = () => {
         if (room !== "") {
             socket.emit('join-room', { room: room })
-            console.log(room)
-            roomRef.current.value=""
+            console.log(room, socket.id)
+            roomRef.current.value = ""
             setRoomId(room)
         }
     }
     const leaveroom = () => {
-        socket.emit("leave-room", {room})
+        socket.emit("leave-room", room)
         setRoomId("")
+        socket.off("receive_msg");
+        socket.off("connect");
     }
 
     //Function to send message to server
     const [message, setMessage] = useState("");
-    const [messageReceived, setMessageReceived] = useState("");
     const [allMsgs, setAllMsgs] = useState([]);
     const sendMsg = (e) => {
+        console.log(message)
         e.preventDefault();
         if (message) {
             socket.emit("send_msg", { message: message, room: room })
-            setAllMsgs([...allMsgs, { message: message, room: room }])
-            msgRef.current.value = ""
-
+            setAllMsgs([...allMsgs, { message: message, room: room, sent: true }])
+            msgRef.current.value = "";
         }
     }
-
     useEffect(() => {
         socket.on("receive_msg", (data) => {
             console.log(data)
-            setAllMsgs([...allMsgs, { message: data.message }]);
+            setAllMsgs([...allMsgs, { message: data.message, sent: false }]);
         })
-        return
-    }, [allMsgs, socket])
+        socket.on("connect", () => {
+            console.log(socket.id)
+        });
+        
+    }, [allMsgs])
 
     return (
         <div className="h-[100vh] w-[90vw] absolute top-0 left-[5vw] bg-blue-300 ">
@@ -55,9 +53,8 @@ const PrivateRoom = () => {
                 <p className="absolute pl-[10px] ">Room:&nbsp;{roomId ? roomId : ""}</p>
                 <p className="shadow-lg text-center mb-[10px]">Messages:</p>
                 <ul className="h-[95%] overflow-y-scroll">
-                    <li>example message</li>
                     {allMsgs.map((msg, index) => (
-                        <li key={index}>{`${msg.message}`}</li>
+                        <li className={`rounded-lg ${msg.sent ? "bg-[#50545d45]" : "bg-[#0049e5c6]"}`} key={index}>{`${msg.message}`}</li>
                     ))}
                 </ul>
             </div>

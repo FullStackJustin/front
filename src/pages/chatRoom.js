@@ -1,19 +1,16 @@
-import io from "socket.io-client"
 import { useEffect, useRef, useState } from 'react';
 import '../styles/chatroom.css'
 
-const socket = io.connect("http://localhost:3000");
 
-
-const Chatroom = () => {
+const Chatroom = ({socket}) => {
   const [userInput, setUserInput] = useState("")
   const today = new Date();
   const time = (today.getHours() > 12 ? today.getHours() - 12 : today.getHours()) + ":" + (today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes()) + " " + (today.getHours() > 12 ? "pm" : "am")
 
   const input = useRef('')
 
- 
-
+  
+  
   //Function to send message
   const sendMsg = (e) => {
     e.preventDefault();
@@ -23,11 +20,12 @@ const Chatroom = () => {
       input.current.value = ""
     }
   }
-
+  
   //UseEffect for only rendering once messageLog when sent and received and adding to chat log
   const messageLog = useRef("");
   const [allMsgs, setAllMsgs] = useState([]);
   useEffect(() => {
+    console.log(socket.id)
     socket.on("receive_message", (data) => {
       setAllMsgs([...allMsgs, { time: data.time, message: data.message }])
     })
