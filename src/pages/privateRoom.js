@@ -4,15 +4,20 @@ import { useNavigate } from "react-router-dom"
 
 const PrivateRoom = ({ socket }) => {
 
+    //Variables
     const navigate = useNavigate();
     const msgRef = useRef("");
     const roomRef = useRef("");
+    const currentUser = localStorage.getItem('username');
+    const [users, setUsers] = useState([]);
 
+
+    //Leave the Room and reset username locally
     const leaveroom = () => {
-
         if (room !== "") {
-            socket.emit("leave-room", room);
+            socket.emit("leave-room", {room:room, user: currentUser});
             setRoomId("");
+            localStorage.removeItem('username')
             socket.off("receive_msg");
             socket.off("connect");
             navigate('/')
@@ -30,33 +35,25 @@ const PrivateRoom = ({ socket }) => {
             socket.emit("send_msg", { message: message, room: room })
             setAllMsgs([...allMsgs, { message: message, room: room, sent: true }])
             msgRef.current.value = "";
+            
         }
     }
 
-    const [users, setUsers] = useState([]);
-    // Function to join room
+    
     const [room, setRoom] = useState("");
     const [roomId, setRoomId] = useState("");
     const [connectedUser, setConnectedUser] = useState('')
-    const joinRoom = () => {
-        if (room !== "") {
-            socket.emit('join-room', { room: room })
-            console.log(room, socket.id)
-            roomRef.current.value = ""
-            setRoomId(room)
-            socket.emit('getConnectedUsers', connectedUser)
-        }
-    }
     useEffect(() => {
         socket.on("receive_msg", (data) => {
             setAllMsgs([...allMsgs, { message: data.message, sent: false }]);
         })
         socket.on("connect", () => {
-            console.log(socket.id);
-            setConnectedUser(socket.id);
+            console.log(socket.id, currentUser);
+            setConnectedUser(currentUser);
+            socket.emit('connectedUsers')
         });
         socket.on("connectedUsers", (data) => {
-            setUsers([...users, { users: data }]);
+            setUsers(data);
         })
         return () => {
             socket.off("receive_msg");
@@ -64,13 +61,25 @@ const PrivateRoom = ({ socket }) => {
             socket.off("connectedUsers");
         }
 
-    }, [allMsgs, users, connectedUser, socket])
-
+    }, [allMsgs, users, connectedUser, currentUser, socket])
+    // Function to join room, set room id to current room, send current user to backend
+    const joinRoom = () => {
+        if (room !== "") {
+            socket.emit('join-room', { room: room, user:currentUser })
+            console.log(room, socket.id)
+            roomRef.current.value = ""
+            setRoomId(room)
+            socket.emit('getConnectedUsers', currentUser)
+            socket.on("updateUserlog", (data) => {
+                setUsers(data);
+            });
+        }
+    }
 
 
     return (
         <div>
-            <div id="userslog" className="absolute left-[2.5vw] w-[32.5vw] h-[100vh] bg-white overflow-y-scroll ">
+            <div id="userslog" className="absolute left-[2.5vw] w-[32.5vw] h-[100vh] bg-white overflow-y-scroll rounded-lg ">
                 <div className="static w-full top-0 left-0 h-fit bg-black text-white ">
                     <p className="text-center py-[2.5vh] pl-[10px] ">{roomId ? "Room: " + roomId :
                         <div className="flex flex-col md:flex-row lg:flex-row w-full mx-auto ">
@@ -79,16 +88,18 @@ const PrivateRoom = ({ socket }) => {
                         </div>
                     }</p>
                 </div>
-                <header className="text-center pt-[15px] ">Active users:</header>
-                <ul className="w-[32.5vw] h-[77.5vh] overflow-y-scroll overflow-x-hidden">{users.map((users, index) => (
-                    <li className="rounded-lg text-black break-words max-w-[100%] " key={index}>{users.users}</li>
-                ))}
+                {roomId?<header className="text-center pt-[15px] ">Active users:</header>:""}
+                <ul className="w-[32.5vw] h-[77.5vh] overflow-y-scroll overflow-x-hidden">
+                    {users.map((users, index) => (
+                        <li className="rounded-lg text-black break-words max-w-[100%] " key={index}>{`${users}`}</li>
+                    ))}
                 </ul>
-                <span className="absolute bottom-[25px] text-center w-full">
+                {roomId?<span className="absolute bottom-[25px] text-center w-full">
                     <button className="border border-black rounded-full px-[5px]" onClick={leaveroom}>Leave&nbsp;room</button>
-                </span>
+                </span>:""}
             </div>
             <div className="h-[100vh] w-[60vw] absolute top-0 right-[2.5vw] bg-blue-300 ">
+                <p className="absolute left-4 bottom-2 ">Currently Signed in as: {currentUser?currentUser:""}</p>
                 <div id="chatlog" className="w-[50vw] my-[5vh] h-[75vh] bg-white py-[25px] rounded-lg mx-auto">
                     <p className="shadow-lg text-center mb-[10px]">Messages:</p>
                     <ul className="h-[95%] overflow-y-scroll">
@@ -98,7 +109,7 @@ const PrivateRoom = ({ socket }) => {
                     </ul>
                 </div>
 
-                <form className="sticky flex flex-row bottom-0 left-[10%] w-[75%] mx-auto justify-between ">
+                <form className="sticky flex flex-row bottom-6 left-[10%] w-[75%] mx-auto justify-between ">
                     <input ref={msgRef} className="border-[2.5px] bg-transparent hover:bg-white hover:text-gray-600 border-black w-[100%] rounded-lg" placeholder="Message..." onChange={(e) => { setMessage(e.target.value) }}></input>
                     <button className="border-[2.5px] hover:border-green-500 hover:text-green-900 rounded-md ml-[5px] border-black" onClick={sendMsg}>Send</button>
                 </form>
