@@ -29,9 +29,10 @@ const PrivateRoom = ({ socket }) => {
         }
     }
 
-    //Function to send message to server
+    //State variables to send message to server
     const [message, setMessage] = useState("");
     const [allMsgs, setAllMsgs] = useState([]);
+    
 
 
 
@@ -40,7 +41,7 @@ const PrivateRoom = ({ socket }) => {
     const [connectedUser, setConnectedUser] = useState('')
     useEffect(() => {
         socket.on("receive_msg", (data) => {
-            setAllMsgs([...allMsgs, { message: data.message, user: data.user, sent: false }]);
+            setAllMsgs([...allMsgs, { message: data.message, time:data.time, user: data.user, sent: false }]);
         })
         socket.on("connect", () => {
             console.log(socket.id, currentUser);
@@ -60,12 +61,13 @@ const PrivateRoom = ({ socket }) => {
     // Function to join room, set room id to current room, send current user to backend
     const joinRoom = () => {
         if (room !== "") {
-            socket.emit('join-room', { room: room, user: currentUser })
+            socket.emit('join-room', { room: room, id:socket.id, user: currentUser })
             console.log(room, socket.id)
             roomRef.current.value = ""
             setRoomId(room)
-            socket.emit('getConnectedUsers', currentUser)
+            socket.emit('getConnectedUsers', {room:room, currentUser:currentUser})
             socket.on("updateUserlog", (data) => {
+                console.log(data)
                 setUsers(data);
             });
             setUserActivity([...userActivity, { user: currentUser }])
@@ -82,7 +84,7 @@ const PrivateRoom = ({ socket }) => {
             <Chatlog room={room} currentUser={currentUser}
                 socket={socket} setAllMsgs={setAllMsgs}
                 allMsgs={allMsgs} msgRef={msgRef} message={message}
-                setMessage={setMessage}>
+                setMessage={setMessage} roomId={roomId}>
             </Chatlog>
         </div>
     )

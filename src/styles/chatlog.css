@@ -1,0 +1,12 @@
+#messages p{
+    box-shadow: rgba(0, 0, 0, 0.349) 0px 2px 3px;
+    padding-top: 2.5px;
+    padding-bottom: 2.5px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#messages h6{
+    font-size: small;
+}
